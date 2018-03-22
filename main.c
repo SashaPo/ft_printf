@@ -14,8 +14,7 @@
 
 int  main(void)
 {
-	long long int a = -1;
-	printf("\nret: %d\n",    printf("%+10.5d", 4242));
-	printf("\nret: %d\n", ft_printf("%+10.5d", 4242));
- return (0);
+        printf("\nret: %d\n",    printf("%0+5d", -42));
+        printf("\nret: %d\n", ft_printf("%0+5d", -42));
+    return (0);
 }
