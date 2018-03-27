@@ -23,6 +23,7 @@ t_pf	*ft_init(t_pf *pf)
 	pf->flags.width = 0;
 	pf->flags.plus = 0;
 	pf->flags.dot = -1;
+	pf->flags.implicit_dot = 0;
 	pf->flags.len = none;
 	return (pf);
 }

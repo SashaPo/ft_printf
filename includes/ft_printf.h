@@ -45,6 +45,7 @@ typedef struct	s_flags
 	char		minus;
 	char		plus;
 	int			dot;
+	int 		implicit_dot;
 	char		space;
 	char		zero;
 	char		hash;
@@ -64,11 +65,15 @@ typedef struct	s_pf
 int  ft_printf(const char *str, ...);
 t_pf	*ft_init(t_pf *pf);
 int		map_specifier(t_pf *pf, va_list args);
-int  get_oO(t_pf *pf, va_list args);
-int  get_cC(t_pf *pf, va_list args);
-int  get_p(t_pf *pf, va_list args);
-ssize_t  get_xX(t_pf *pf, va_list args);
-char			*ft_itoa_long_prec(long long int n, int prec);
+int		get_oO(t_pf *pf, va_list args);
+int		get_cC(t_pf *pf, va_list args);
+int		get_p(t_pf *pf, va_list args);
+int		get_fF(t_pf *pf, va_list args);
+int		get_b(t_pf *pf, va_list args);
+ssize_t	get_xX(t_pf *pf, va_list args);
+char	*ft_itoa_long_prec(long long int n, int prec);
+char	*ft_unicode(unsigned int un);
+char	*ft_get_unistr(unsigned int nbrs);
 
 int  get_percent(t_pf *pf, va_list args);
 int  get_uU(t_pf *pf, va_list args);
@@ -82,6 +87,7 @@ void	parse_prec(t_pf *pf);
 void	parse_length(t_pf *pf);
 void	parse_width(t_pf *pf);;
 void	parse_flags(t_pf *pf);
+void	parse_implicit_dot(t_pf *pf);
 size_t	cut_specifier(const char *format, t_pf *pf);
 size_t	specifier_len(const char *format);
 t_bool is_valid_type(char c);

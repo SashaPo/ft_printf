@@ -2,7 +2,7 @@ NAME = libftprintf.a
 
 FLAGS = -Wall -Wextra -Werror
 
-SRCS = src/ft_printf.c src/ft_init.c
+SRCS = src/ft_printf.c src/ft_init.c src/ft_unicode.c
 
 SRCS_LIB = ft_memcmp.c 		ft_strlcat.c		ft_atoi.c \
 		ft_memcpy.c 		ft_strlen.c			ft_bzero.c \
@@ -38,7 +38,7 @@ BINS_LIB = $(DIR_SRCS_LIB:.c=.o)
 all : $(NAME)
 
 $(NAME) : $(BINS) $(BINS_LIB)
-	ar rcu $(NAME) $(BINS) $(BINS_LIB)
+	ar rc $(NAME) $(BINS) $(BINS_LIB)
 	ranlib $(NAME)
 
 %.o:%.c
@@ -53,7 +53,3 @@ fclean: clean
 	make -C libft/ fclean
 
 re: fclean all
-
-
-debug: main.c
-	gcc main.c -L . -lftprintf -O3 -I includes -Ilibft -o debug.ft_printf

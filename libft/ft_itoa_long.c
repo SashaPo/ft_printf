@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "libft.h"
+#include <math.h>
 
 static long long int		nlen(long long int val)
 {
@@ -56,7 +57,7 @@ char			*ft_itoa_long(long long int n)
 	return (res);
 }
 
-char			*ft_itoa_long_prec(long long int n, int prec)
+char			*ft_itoa_long_prec(long long n, int prec)
 {
 	char	*res;
 	long long int		strsize;
@@ -79,6 +80,38 @@ char			*ft_itoa_long_prec(long long int n, int prec)
 			res[--strsize] = n % 10 + '0';
 		else if (n < 0)
 			res[--strsize] = '0' - (n % 10);
+		n /= 10;
+	}
+	if (sign)
+		res[0] = '-';
+	while (prec >= 0 && strsize)
+		res[--strsize] = '0';
+	return (res);
+}
+
+char			*ft_itoa_double_prec(double n, int prec)
+{
+	char	*res;
+	long long int		strsize;
+	long long int		sign;
+
+	if (n >= 0)
+		sign = 0;
+	else
+		sign = 1;
+	strsize = nlen(n);
+	if (prec >= 0 && prec > strsize)
+		strsize = prec;
+	if (!(res = ft_strnew(strsize)))
+		return (NULL);
+	if (n == 0)
+		res[--strsize] = '0';
+	while (n != 0)
+	{
+		if (n > 0)
+			res[--strsize] = (char)((fmod(n, 10) == 0) + '0');
+		else if (n < 0)
+			res[--strsize] = '0' - (char)((fmod(n, 10) == 0));
 		n /= 10;
 	}
 	if (sign)
