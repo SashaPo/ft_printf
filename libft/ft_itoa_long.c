@@ -109,9 +109,9 @@ char			*ft_itoa_double_prec(double n, int prec)
 	while (n != 0)
 	{
 		if (n > 0)
-			res[--strsize] = (char)((fmod(n, 10) == 0) + '0');
+			res[--strsize] = (char) (n - (n / 10 * 10) + '0');
 		else if (n < 0)
-			res[--strsize] = '0' - (char)((fmod(n, 10) == 0));
+			res[--strsize] = (char) ('0' - (n - (n / 10 * 10)));
 		n /= 10;
 	}
 	if (sign)
