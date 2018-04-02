@@ -342,12 +342,13 @@ int	get_dDi(t_pf *pf, va_list args)
         }
         return (int) (len + write(1, check_sign, ft_strlen(check_sign)));
     }
-    if ((pf->flags.width && pf->flags.width > (len + ft_strlen(expanded))) || (pf->flags.width && pf->flags.dot != -1 && pf->flags.star))
+    if ((pf->flags.width && pf->flags.width > (len + ft_strlen(expanded)) && !pf->flags.star) || (pf->flags.width && pf->flags.dot != -1 && pf->flags.star && (pf->flags.width < (size_t) pf->flags.dot)))
     {
         if (pf->flags.width && pf->flags.dot != -1 && pf->flags.star)
         {
             pf->flags.width = pf->flags.dot - pf->flags.width;
-            expanded = expanded + pf->flags.width;
+            if (pf->flags.zero)
+                expanded = expanded + pf->flags.width;
             return (int) (len + write(1, expanded, ft_strlen(expanded)));
         }
         else
