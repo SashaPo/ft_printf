@@ -18,6 +18,7 @@ t_pf	*ft_init(t_pf *pf)
 {
 	pf->flags.hash = 0;
 	pf->flags.zero = 0;
+	pf->flags.star = 0;
 	pf->flags.space = 0;
 	pf->flags.minus = 0;
 	pf->flags.width = 0;

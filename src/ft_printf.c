@@ -12,7 +12,6 @@
 
 #include "ft_printf.h"
 #include <stdio.h>
-#include <stdarg.h>
 
 int	get_Z(t_pf *pf)
 {
@@ -54,7 +53,7 @@ t_bool	is_length(char c)
 
 t_bool	is_flag(char c)
 {
-	return (t_bool) (c == '.' || c == '-'|| c == '+'|| c == '0'|| c == '#' || c == ' ');
+	return (t_bool) (c == '.' || c == '-'|| c == '+'|| c == '0'|| c == '#' || c == ' ' || c == '*');
 }
 
 size_t	specifier_len(const char *format)
@@ -103,12 +102,15 @@ void	parse_flags(t_pf *pf)
 	size_t i = 0;
 	while (i < pf->speclen)
 	{
+        if (pf->spec[i] == '*')
+            pf->flags.star = TRUE;
 		if (pf->spec[i] == '-')
 			pf->flags.minus = TRUE;
 		if (pf->spec[i] == '#')
 			pf->flags.hash = TRUE;
 		if ((pf->spec[i] == '0'
-			&& (i - 1 > 0  && !(pf->spec[i - 1] >= '0' && pf->spec[i - 1] <= '9'))) || (pf->spec[i] == '0' && pf->flags.hash))
+			&& (i - 1 > 0  && !(pf->spec[i - 1] >= '0' && pf->spec[i - 1] <= '9')))
+            || (pf->spec[i] == '0' && pf->flags.hash))
 			pf->flags.zero = TRUE;
 		if (pf->spec[i] == '+')
 			pf->flags.plus = TRUE;
@@ -150,9 +152,9 @@ void	parse_width(t_pf *pf)
         else
             i++;
 	}
-    pf->flags.width = width;
+    pf->flags.width = (size_t) width;
 }
-
+/* priority for length flags - one ub in hhld */
 void	parse_length(t_pf *pf)
 {
 	size_t i = 0;
@@ -160,13 +162,13 @@ void	parse_length(t_pf *pf)
 	{	// lhh
 		if ((pf->spec[i] == 'h' && pf->spec[i + 1] == 'h') || pf->spec[i] == 'l')
 		{
-			if (pf->spec[i] == 'l') //kostyl
+			if (pf->spec[i] == 'l')
 				pf->flags.len = l;
 			else
 				pf->flags.len = hh;
 			i++;
 		}
-		else if (pf->spec[i] == 'h' && h > pf->flags.len) // приоритет
+		else if (pf->spec[i] == 'h' && h > pf->flags.len)
 			pf->flags.len = h;
         else if (pf->spec[i] == 'l' && pf->spec[i + 1] == 'l' && l > pf->flags.len)
             pf->flags.len = ll;
@@ -198,6 +200,57 @@ void	parse_prec(t_pf *pf)
 		pf->flags.dot = TRUE;
 	}
 	pf->flags.dot = dot;
+}
+
+void	parse_star(t_pf *pf, va_list args)
+{
+    size_t i = 0;
+    int d = 0;
+    int c = 0;
+    while (i < pf->speclen)
+    {
+        if ((pf->spec[i] == '*' && pf->spec[i + 1] == '.' && !ft_isdigit(pf->spec[i + 1])) || (pf->spec[i] == '*' && pf->spec[i - 1] != '.' && !ft_isdigit(pf->spec[i + 1])))
+        {
+            d = va_arg(args, int);
+            char *test = ft_itoa(d);
+            if (test[0] == '-')
+            {
+                pf->flags.minus = 1;
+                d = ft_atoi(test + 1);
+            }
+            pf->flags.width = (size_t) d;
+        }
+        if (pf->spec[i] == '*' && pf->spec[i - 1] == '.')
+        {
+            d = va_arg(args, int);
+            char *test = ft_itoa(d);
+            if (test[0] == '-')
+            {
+                pf->flags.minus = 1;
+                d = ft_atoi(test + 1);
+            }
+            pf->flags.dot = d;
+        }
+        if (pf->spec[i] == '*' && ft_isdigit(pf->spec[i + 1]))
+        {
+            d = va_arg(args, int);
+            if (d == 0)
+                pf->flags.zero = 0;
+            else
+            {
+                char *test = ft_itoa(d);
+                if (test[0] == '-')
+                {
+                    pf->flags.minus = 1;
+                    d = ft_atoi(test + 1);
+                }
+                c = (int) pf->flags.width;
+                d = (d - c) + 1;
+                pf->flags.width = (size_t) d;
+            }
+        }
+        i++;
+    }
 }
 
 void	parse_implicit_dot(t_pf *pf)
@@ -261,85 +314,6 @@ unsigned long long fetch_unsigned_arg(t_pf *pf, va_list args)
 	return (unres);
 }
 
-int	get_fF(t_pf *pf, va_list args)
-{
-	int lenf = 0;
-	int j = 0;
-	signed long int decipart;
-	signed long int intpart;
-	char *expanded = 0;
-	double f = va_arg(args, double);
-	if (f < 0)
-	{
-		f *= -1;
-		lenf += write(1, "-", 1);
-	}
-	intpart = (signed long int)f;
-	lenf += write(1, ft_itoa_long(intpart), ft_strlen(ft_itoa_long(intpart)));
-	lenf += write(1, ".", 1);
-	f -= intpart;
-	f *= 1000000;  //upto 6 decimal points
-	decipart = (signed long int)(f + 0.5); //+0.5 to round of the value
-//	ft_putnbr(decipart);
-	f = intpart + decipart;
-	expanded = ft_itoa_long_prec(decipart, pf->flags.dot);
-	char *check_sign = ft_itoa(f);
-	if ((check_sign[0] == '-' && !pf->flags.plus && pf->flags.dot != -1) || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero))
-		lenf += write(1, "-", 1);
-	if (pf->spec[j + 1] == '.' && pf->flags.width && f == 0) // fixed 176
-	{
-		int zero_arg = pf->flags.width;
-		while (zero_arg--)
-			lenf += write(1, " ", 1);
-		return (lenf);
-	}
-	if (pf->flags.width && pf->flags.width > (lenf + ft_strlen(expanded)))
-	{
-		int difference = (int) (pf->flags.width - ft_strlen(expanded));
-		if (pf->flags.minus)
-		{
-			if (pf->flags.plus)
-				lenf += write(1, "+", 1);
-			lenf += write(1, expanded, ft_strlen(expanded));
-		}
-		if (pf->flags.plus && check_sign[0] != '-')
-			difference = difference - 1;
-		if (pf->flags.plus && expanded[0] != '-' && pf->flags.dot == -1)
-			lenf += write(1, "+", 1);
-		if (pf->flags.dot != -1 && expanded[0] != '-')
-			pf->flags.zero = 0;
-		if (expanded[0] == '-' && !pf->flags.plus && pf->flags.zero)
-			lenf += write(1, "-", 1);
-		while (difference--)
-			lenf += write(1, pf->flags.zero ? "0" : " ", 1);
-	}
-	if ((f == 0 && pf->flags.dot != -1) || (f == 0 && pf->flags.dot == -1)) //fixed 175
-	{
-		if (pf->spec[j] == '.')
-			return (lenf + free_deluxe((void **)&expanded));
-	}
-	if (expanded[0] == '-' && !pf->flags.plus && pf->flags.zero && !pf->flags.width)
-		lenf += write(1, "-", 1);
-	if ((pf->flags.plus && expanded[0] != '-' && !pf->flags.width && !pf->flags.minus) || (pf->flags.plus && expanded[0] != '-' && pf->flags.dot != -1 && !pf->flags.minus))
-		lenf += write(1, "+", 1);
-	if (pf->flags.space && !pf->flags.plus && !pf->flags.width)
-	{
-		if (expanded[0] == '-')
-			expanded[0] = '-';
-		else
-			lenf += write(1, " ", 1);
-	}
-	if (pf->flags.minus)
-		return (lenf + free_deluxe((void **)&expanded) + free_deluxe((void **)&check_sign));
-	if ((expanded[0] == '-' && !pf->flags.plus && pf->flags.zero) || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero && pf->flags.width))
-	{
-		return (int) (lenf + write(1, expanded + 1, ft_strlen(expanded + 1)) + free_deluxe((void **)&expanded) + free_deluxe((void **)&check_sign));
-	}
-	free(check_sign);
-	free(expanded);
-	return (int) (lenf + write(1, expanded, ft_strlen(expanded)));
-}
-
 int	get_dDi(t_pf *pf, va_list args)
 {
 	int len = 0;
@@ -348,7 +322,7 @@ int	get_dDi(t_pf *pf, va_list args)
 	long long d = 0;
     int difference = 0;
 	if (pf->type == 'D')
-		pf->flags.len ? (d = va_arg(args, int)) : (d = va_arg(args, long long)); //fixed ushort_max
+		pf->flags.len ? (d = va_arg(args, int)) : (d = va_arg(args, long long));
 	else if (pf->flags.len || pf->type == 'd' || pf->type == 'i')
 		d = fetch_signed_arg(pf, args);
     expanded = ft_itoa_long_prec(d, pf->flags.dot);
@@ -368,9 +342,16 @@ int	get_dDi(t_pf *pf, va_list args)
         }
         return (int) (len + write(1, check_sign, ft_strlen(check_sign)));
     }
-    if (pf->flags.width && pf->flags.width > (len + ft_strlen(expanded)))
+    if ((pf->flags.width && pf->flags.width > (len + ft_strlen(expanded))) || (pf->flags.width && pf->flags.dot != -1 && pf->flags.star))
     {
-        difference = (int) (pf->flags.width - ft_strlen(expanded));
+        if (pf->flags.width && pf->flags.dot != -1 && pf->flags.star)
+        {
+            pf->flags.width = pf->flags.dot - pf->flags.width;
+            expanded = expanded + pf->flags.width;
+            return (int) (len + write(1, expanded, ft_strlen(expanded)));
+        }
+        else
+            difference = (int) (pf->flags.width - ft_strlen(expanded));
         if (check_sign[0] == '-' && !pf->flags.plus && pf->flags.dot != -1)
         {
             difference = difference - 1;
@@ -381,11 +362,12 @@ int	get_dDi(t_pf *pf, va_list args)
             return (int) (len + write(1, expanded, ft_strlen(expanded)));
         }
     }
-    if ((check_sign[0] == '-' && !pf->flags.plus && pf->flags.dot != -1) || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero))
+    if ((check_sign[0] == '-' && !pf->flags.plus && pf->flags.dot != -1)
+        || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero))
             len += write(1, "-", 1);
-    if (pf->spec[j + 1] == '.' && pf->flags.width && d == 0) // fixed 176
+    if (pf->spec[j + 1] == '.' && pf->flags.width && d == 0)
     {
-        int zero_arg = pf->flags.width;
+        int zero_arg = (int) pf->flags.width;
         while (zero_arg--)
             len += write(1, " ", 1);
         return (len);
@@ -473,9 +455,11 @@ int	get_dDi(t_pf *pf, va_list args)
 		if (pf->flags.zero)
 			len += write(1, "+", 1);
 	}
-	if ((pf->flags.plus && expanded[0] != '-' && !pf->flags.width && !pf->flags.minus) || (pf->flags.plus && expanded[0] != '-' && pf->flags.dot != -1 && !pf->flags.minus))
+	if ((pf->flags.plus && expanded[0] != '-' && !pf->flags.width && !pf->flags.minus)
+        || (pf->flags.plus && expanded[0] != '-' && pf->flags.dot != -1 && !pf->flags.minus))
 		len += write(1, "+", 1);
-    if (pf->flags.space && !pf->flags.plus && !pf->flags.width)
+    if ((pf->flags.space && !pf->flags.plus && !pf->flags.width)
+        || (pf->flags.space && !pf->flags.plus && pf->flags.width && pf->flags.dot != -1 && (pf->flags.width < (size_t)pf->flags.dot)))
     {
         if (expanded[0] == '-')
             expanded[0] = '-';
@@ -484,17 +468,16 @@ int	get_dDi(t_pf *pf, va_list args)
     }
 	if (pf->flags.minus)
 	{
-		if (pf->flags.width && pf->flags.width < ft_strlen(expanded))
+		if ((pf->flags.width && pf->flags.width < ft_strlen(expanded) && !pf->flags.star) || (pf->speclen == 1 && !pf->flags.star))
 			return (int) (len + write(1, expanded, ft_strlen(expanded)) + free_deluxe((void **)&expanded));
+        if (!pf->flags.width && pf->flags.dot != -1 && pf->flags.star)
+            return (int) (len + write(1, check_sign, ft_strlen(check_sign)) + free_deluxe((void **)&check_sign));
 		return (len + free_deluxe((void **)&expanded) + free_deluxe((void **)&check_sign));
 	}
-    if ((expanded[0] == '-' && !pf->flags.plus && pf->flags.zero) || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero && pf->flags.width))
-    {
+    if ((expanded[0] == '-' && !pf->flags.plus && pf->flags.zero)
+        || (check_sign[0] == '-' && pf->flags.plus && pf->flags.zero && pf->flags.width))
             return (int) (len + write(1, expanded + 1, ft_strlen(expanded + 1)) + free_deluxe((void **)&expanded) + free_deluxe((void **)&check_sign));
-    }
-    free(check_sign);
-    free(expanded);
-    return (int) (len + write(1, expanded, ft_strlen(expanded)));
+    return (int) (len + write(1, expanded, ft_strlen(expanded)) + free_deluxe((void **)&expanded) + free_deluxe((void **)&check_sign));
 }
 
 int	get_uU(t_pf *pf, va_list args)
@@ -529,14 +512,14 @@ int	get_uU(t_pf *pf, va_list args)
     }
     if (pf->flags.dot != -1 && pf->flags.dot > (int) ft_strlen(expand1))
     {
-        int udiff = pf->flags.dot - ft_strlen(expand1);
+        int udiff = (int) (pf->flags.dot - ft_strlen(expand1));
         while (udiff--)
             ulen += write(1, "0", 1);
     }
         if (pf->flags.minus)
             return (ulen);
         else if (pf->flags.len)
-            return ( ulen + write(1, expand1, ft_strlen(expand1)) + free_deluxe((void **)&expand1));
+            return (int) (ulen + write(1, expand1, ft_strlen(expand1)) + free_deluxe((void **)&expand1));
         else
             return (int) (ulen + write(1, expand1, ft_strlen(expand1)) + free_deluxe((void **)&expand1));
 }
@@ -561,7 +544,7 @@ int	get_sS(t_pf *pf, va_list args)
 		while(*str)
 		{
 			char *one = ft_get_unistr(*str);
-            onelen = ft_strlen(one);
+            onelen = (int) ft_strlen(one);
 			char *tmp = count;
 			count = ft_strjoin(count ? count : "", one);
 			ft_memdel((void **)&tmp);
@@ -573,11 +556,11 @@ int	get_sS(t_pf *pf, va_list args)
 		if (pf->flags.dot != -1 && pf->flags.dot < (int)strlen)
         {
             if (pf->flags.dot == onelen)
-                strlen = pf->flags.dot;
+                strlen = (size_t) pf->flags.dot;
             else if (pf->flags.width && pf->flags.dot > (int) pf->flags.width)
-                strlen = pf->flags.dot;
+                strlen = (size_t) pf->flags.dot;
             else
-                strlen = onelen;
+                strlen = (size_t) onelen;
         }
 		if (pf->flags.implicit_dot && pf->flags.width)
         {
@@ -596,7 +579,7 @@ int	get_sS(t_pf *pf, va_list args)
         }
 		if (pf->flags.width && pf->flags.width > strlen)
 		{
-			int differ = pf->flags.width - strlen;
+			int differ = (int) (pf->flags.width - strlen);
 			if (pf->flags.minus)
 				slen += write(1, count, strlen);
 			while (differ)
@@ -673,8 +656,10 @@ int	get_sS(t_pf *pf, va_list args)
 	 if (pf->type == 'C' || pf->flags.len)
 	 {
 		 int uni = va_arg(args, unsigned int);
-		 if (!uni)
-			 return (len1 + ft_putchar(uni));
+         if (!uni)
+             return (len1 + ft_putchar(uni));
+         if (MB_CUR_MAX == 1)
+             return (len1 + ft_putchar(uni));
 		 char *ch = ft_unicode(uni);
 		 if (pf->flags.width > 1)
 		 {
@@ -729,7 +714,7 @@ int	get_sS(t_pf *pf, va_list args)
              if (pf->spec[i + 1] == '.' && !pf->flags.width)
                  return (lenX);
              if (pf->flags.width && pf->spec[i + 1] == '.') {
-                 int wtf = pf->flags.width;
+                 int wtf = (int) pf->flags.width;
                  while (wtf--)
                      lenX += write(1, " ", 1);
                  return (lenX);
@@ -760,7 +745,8 @@ int	get_sS(t_pf *pf, va_list args)
              return (lenX);
          else if (pf->flags.dot != -1)
          {
-             if ((pf->flags.dot > (int) big_x_len && !pf->flags.width) || (pf->flags.dot > (int) big_x_len && pf->flags.width && (pf->flags.width > (size_t) pf->flags.dot)))
+             if ((pf->flags.dot > (int) big_x_len && !pf->flags.width)
+                 || (pf->flags.dot > (int) big_x_len && pf->flags.width && (pf->flags.width > (size_t) pf->flags.dot)))
                  pf->flags.zero = 1;
              if (pf->flags.dot > (int) big_x_len)
              {
@@ -836,7 +822,8 @@ int	get_sS(t_pf *pf, va_list args)
 		 return (lenx);
      if (pf->flags.dot != -1)
      {
-         if ((pf->flags.dot > (int) little_x_len && !pf->flags.width) || (pf->flags.dot > (int) little_x_len && pf->flags.width && (pf->flags.width > (size_t) pf->flags.dot)))
+         if ((pf->flags.dot > (int) little_x_len && !pf->flags.width)
+             || (pf->flags.dot > (int) little_x_len && pf->flags.width && (pf->flags.width > (size_t) pf->flags.dot)))
              pf->flags.zero = 1;
          if (pf->flags.dot > (int) little_x_len)
          {
@@ -878,7 +865,7 @@ int	get_sS(t_pf *pf, va_list args)
 			 lenp = (size_t) pf->flags.dot;
 		 if (pf->flags.dot == -1 && pf->flags.width > lenp)
 		 {
-		 	int pi = lenp > 0 ? pf->flags.width - lenp : pf->flags.width - 3;
+		 	int pi = (int) (lenp > 0 ? pf->flags.width - lenp : pf->flags.width - 3);
 		 	while (pi--)
 			 	lenp += write(1, pf->flags.zero ? "0" : " ", 1);
 		 }
@@ -898,7 +885,7 @@ int	get_sS(t_pf *pf, va_list args)
                  lenp += write(1, pf->flags.zero ? "0" : " ", 1);
              lenp += write(1, "0x", 2);
              lenp += write(1, exp, ft_strlen(exp));
-             return(lenp);
+             return (int) (lenp);
          }
          lenp += write(1, "0x", 2);
          if (pf->flags.dot != -1 && pf->flags.dot > (int) pf->flags.width && test != 0)
@@ -907,10 +894,10 @@ int	get_sS(t_pf *pf, va_list args)
              while (pi--)
                  lenp += write(1, "0", 1);
              lenp += write(1, exp, ft_strlen(exp));
-             return(lenp);
+             return (int) (lenp);
          }
          if (pf->flags.implicit_dot || (pf->flags.dot == 0 && test == 0))
-             return(lenp);
+             return (int) (lenp);
          if ((pf->flags.dot != -1 && test == 0))
          {
              lenp += write(1, exp, ft_strlen(exp));
@@ -963,7 +950,7 @@ int	get_sS(t_pf *pf, va_list args)
      }
 	 if (octal == 0 && pf->flags.dot != -1)
 	 {
-		 if (pf->flags.width && pf->spec[i + 1] == '.') // fixed 094 test
+		 if (pf->flags.width && pf->spec[i + 1] == '.')
 		 {
 			 int wtf = pf->flags.width;
 			 while (wtf--)
@@ -973,12 +960,12 @@ int	get_sS(t_pf *pf, va_list args)
 	 }
      if (pf->flags.width && pf->flags.width > len_ex && octal != 0)
 	 {
-		 int dt = pf->flags.width - len_ex;
+		 int dt = (int) (pf->flags.width - len_ex);
 		 if (pf->flags.minus)
          {
              if (pf->flags.dot == -1)
              {
-                 if (pf->flags.hash && octal != 0  && pf->flags.minus) // fixed 88
+                 if (pf->flags.hash && octal != 0  && pf->flags.minus)
                  {
                      leno += write(1, "0", 1);
                      leno += write(1, ex, ft_strlen(ex));
@@ -999,17 +986,17 @@ int	get_sS(t_pf *pf, va_list args)
      {
          if (pf->spec[i] == '.')
             return (leno);
-		 if (pf->flags.width && pf->spec[i + 1] == '.') // fixed 048 test
+		 if (pf->flags.width && pf->spec[i + 1] == '.')
 		 {
-			 int wtf = pf->flags.width;
+			 int wtf = (int) pf->flags.width;
 			 while (wtf--)
 				 leno += write(1, " ", 1);
 			 return (leno);
 		 }
-         return (write(1, "0", 1));
+         return (int) (write(1, "0", 1));
      }
      if (octal == 0 && pf->flags.hash)
-         return (write(1, "0", 1));
+         return (int) (write(1, "0", 1));
 	 if (pf->flags.hash && octal != 0  && !pf->flags.minus && pf->flags.dot == -1)
 		 leno += write(1, "0", 1);
      else if (pf->flags.minus && pf->flags.width)
@@ -1018,7 +1005,7 @@ int	get_sS(t_pf *pf, va_list args)
              return (leno);
          if (pf->flags.dot != -1 && pf->flags.width)
          {
-             leno += write(1, ex, len_ex); //fixed 91 test
+             leno += write(1, ex, len_ex);
              while ((int)pf->flags.width-- > pf->flags.dot)
                  leno += write(1, " ", 1);
              return (leno);
@@ -1035,7 +1022,7 @@ int	get_sS(t_pf *pf, va_list args)
 	 if (pf->flags.minus)
 		 return (leno);
 	 else
-	 	return (leno + write(1, ex, ft_strlen(ex)) + free_deluxe((void **)&ex));
+	 	return (int) (leno + write(1, ex, ft_strlen(ex)) + free_deluxe((void **)&ex));
  }
 
 int	get_b(t_pf *pf, va_list args)
@@ -1048,7 +1035,7 @@ int	get_b(t_pf *pf, va_list args)
 	if (pf->flags.dot != -1)
 		pf->flags.zero = 1;
 	if (pf->flags.dot != -1 && pf->flags.dot < (int)len_ex)
-		len_ex = pf->flags.dot;
+		len_ex = (size_t) pf->flags.dot;
 	if (pf->flags.dot != -1 && pf->flags.dot > (int)len_ex)
 	{
 		int ifdot = pf->flags.dot - (int)len_ex;
@@ -1062,7 +1049,7 @@ int	get_b(t_pf *pf, va_list args)
 	{
 		if (pf->flags.width && pf->spec[i + 1] == '.') // fixed 094 test
 		{
-			int wtf = pf->flags.width;
+			int wtf = (int) pf->flags.width;
 			while (wtf--)
 				leno += write(1, " ", 1);
 			return (leno);
@@ -1070,7 +1057,7 @@ int	get_b(t_pf *pf, va_list args)
 	}
 	if (pf->flags.width && pf->flags.width > len_ex && b != 0)
 	{
-		int dt = pf->flags.width - len_ex;
+		int dt = (int) (pf->flags.width - len_ex);
 		if (pf->flags.minus)
 		{
 			if (pf->flags.dot == -1)
@@ -1098,15 +1085,15 @@ int	get_b(t_pf *pf, va_list args)
 			return (leno);
 		if (pf->flags.width && pf->spec[i + 1] == '.') // fixed 048 test
 		{
-			int wtf = pf->flags.width;
+			int wtf = (int) pf->flags.width;
 			while (wtf--)
 				leno += write(1, " ", 1);
 			return (leno);
 		}
-		return (write(1, "0", 1));
+		return (int) (write(1, "0", 1));
 	}
 	if (b == 0 && pf->flags.hash)
-		return (write(1, "0", 1));
+		return (int) (write(1, "0", 1));
 	if (pf->flags.hash && b != 0  && !pf->flags.minus)
 		leno += write(1, "0", 1);
 	else if (pf->flags.minus && pf->flags.width)
@@ -1128,7 +1115,7 @@ int	get_b(t_pf *pf, va_list args)
 	if (pf->flags.minus)
 		return (leno);
 	else
-		return (leno + write(1, ex, ft_strlen(ex)) + free_deluxe((void **)&ex));
+		return (int) (leno + write(1, ex, ft_strlen(ex)) + free_deluxe((void **)&ex));
 }
 
 int	get_percent(t_pf *pf, va_list args)
@@ -1139,7 +1126,7 @@ int	get_percent(t_pf *pf, va_list args)
 	(void)args;
 	if (pf->flags.width > 1)
 	{
-		int diff = pf->flags.width - 1;
+		int diff = (int) (pf->flags.width - 1);
 		if (pf->flags.minus)
 			plen += write(1, "%", 1);
 		while (diff--)
@@ -1158,7 +1145,7 @@ int	get_unknown(t_pf *pf, va_list args)
     char wtf = pf->type;
 	if (pf->flags.width > 1 && wtf)
 	{
-		int di = pf->flags.width - 1;
+		int di = (int) (pf->flags.width - 1);
 		while (di--)
 			unknownlen += write(1, pf->flags.zero ? "0" : " ", 1);
 	}
@@ -1175,27 +1162,27 @@ int	get_unknown(t_pf *pf, va_list args)
 ** 4. Parse prec.
 */
 
-void	parse_specifier(t_pf *pf)
+void	parse_specifier(t_pf *pf, va_list args)
 {
 	parse_flags(pf);
 	parse_width(pf);
+    parse_prec(pf);
+    parse_star(pf, args);
 	parse_length(pf);
-	parse_prec(pf);
 	parse_implicit_dot(pf);
 }
 
 int		map_specifier(t_pf *pf, va_list args)
 {
-	// Map convertion type to appropriate function
 	if (pf->type == 'd' || pf->type == 'D'|| pf->type == 'i')
 		return (get_dDi(pf, args));
 	else if (pf->type == 's' || pf->type == 'S')
 		return(get_sS(pf, args));
-	 else if (pf->type == 'o' || pf->type == 'O')
+    else if (pf->type == 'o' || pf->type == 'O')
 	 	return(get_oO(pf, args));
-	 else if (pf->type == 'x' || pf->type == 'X')
-	 	return(get_xX(pf, args));
-	 else if (pf->type == 'c' || pf->type == 'C')
+    else if (pf->type == 'x' || pf->type == 'X')
+	 	return (int) (get_xX(pf, args));
+    else if (pf->type == 'c' || pf->type == 'C')
 		return(get_cC(pf, args));
 	else if (pf->type == 'f' || pf->type == 'F')
 		return(get_fF(pf, args));
@@ -1205,9 +1192,9 @@ int		map_specifier(t_pf *pf, va_list args)
 		return(get_uU(pf, args));
 	else if (pf->type == 'b')
 		return(get_b(pf, args));
-	 else if (pf->type == 'p')
+    else if (pf->type == 'p')
 	 	return(get_p(pf, args));
-	 else if (pf->type == '%')
+    else if (pf->type == '%')
 	 	return(get_percent(pf, args));
 	else
 		return(get_unknown(pf, args));
@@ -1218,13 +1205,14 @@ int		ft_printf(const char *format, ...)
 	va_list args;
 	t_pf 	*spec;
 	int		res;
+    int     len;
 
 	res = 0;
 	va_start(args, format);
     spec = malloc(sizeof(t_pf));
 	while (*format)
 	{
-        int len = 0;
+        len = 0;
 		if (*format && *format == '%')
 		{
 			ft_init(spec);
@@ -1234,7 +1222,7 @@ int		ft_printf(const char *format, ...)
 				format++;
 			size_t ret = cut_specifier(format, spec);
 			if (ret > 0)
-            	parse_specifier(spec);
+            	parse_specifier(spec, args);
 			res += map_specifier(spec, args);
 			format += ret + 1;
 		}

@@ -13,15 +13,6 @@
 #include "libft.h"
 #define ABS(v) ((v) < 0 ? -(v) : (v))
 
-//void	raux(long long int n, int b, char *ans, int *p)
-//{
-//	char	base[] = "0123456789ABCDEF";
-//
-//	if (n <= -b || b <= n)
-//		raux(n / b, b, ans, p);
-//	ans[(*p)++] = base[ABS(n % b)];
-//}
-
 int     get_len(unsigned long long value, int base)
 {
     int len;
@@ -71,7 +62,6 @@ char	*itoa_signed(long long int value, int base, char type)
         value /= base;
         ans[i++] = type == 'x' ? ft_tolower(radix[last_digit]) : radix[last_digit];
     }
-//	raux(value, base, ans, &p);
 	ans[i] = '\0';
 	return (ans);
 }
@@ -95,7 +85,6 @@ char	*itoa_unsigned(unsigned long long value, int base, char type)
         else
             ans[len-- - 1] = radix[last_digit];
     }
-//	raux(value, base, ans, &p);
     return (ans);
 }
 
