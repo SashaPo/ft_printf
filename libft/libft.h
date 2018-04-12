@@ -75,12 +75,12 @@ char				*ft_itoa(int n);
 char				*ft_itoa_base(int value, int base);
 char				*ft_itoa_base_2(int value, int base);
 char				*ft_itoa_long(long long int n);
-char				*ft_itoa_base_long(long long int value, int base);
 char				*ft_itoa_base_long_2(long long int value, int base);
 char				*ft_itoa_ulong(unsigned long long int n);
-char				*itoa_unsigned(unsigned long long int value, int base, char type);
+char				*itoa_u(unsigned long long int value, int base, char type);
 char				*itoa_signed(long long int value, int base, char type);
 char				*ft_itoa_double_prec(double n, int prec);
+char				*ft_dtoa(double n);
 
 typedef	struct		s_list
 {

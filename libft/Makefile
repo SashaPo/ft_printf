@@ -34,8 +34,7 @@ FILES = ft_memcmp.c 		ft_strlcat.c		ft_atoi.c \
 		ft_lstmap.c			ft_lstpush_b.c		ft_lstclear.c \
 		ft_lst_size.c		ft_swap.c			ft_del.c \
 		ft_itoa_base.c 		ft_itoa_base_2.c	ft_itoa_long.c \
-		ft_itoa_base_long.c ft_itoa_base_long_2.c \
-		ft_itoa_ulong.c
+		ft_itoa_base_long_2.c ft_itoa_ulong.c
 OFILES = $(FILES:%.c=%.o)
 
 FLAGS = -c -Wall -Wextra -Werror

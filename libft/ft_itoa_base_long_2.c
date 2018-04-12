@@ -13,78 +13,79 @@
 #include "libft.h"
 #define ABS(v) ((v) < 0 ? -(v) : (v))
 
-int     get_len(unsigned long long value, int base)
+int		get_len(unsigned long long value, int base)
 {
-    int len;
+	int				len;
 
-    if (value == 0)
-        len = 1;
-    else
-        len = 0;
-    while (value != 0)
-    {
-        value /= base;
-        len++;
-    }
-    return(len);
+	if (value == 0)
+		len = 1;
+	else
+		len = 0;
+	while (value != 0)
+	{
+		value /= base;
+		len++;
+	}
+	return (len);
 }
 
-int     get_len2(long long value, int base)
+int		get_len2(long long value, int base)
 {
-    int len;
+	int				len;
 
-    len = 0;
-    while (value != 0)
-    {
-        value /= base;
-        len++;
-    }
-    return(len);
+	len = 0;
+	while (value != 0)
+	{
+		value /= base;
+		len++;
+	}
+	return (len);
 }
 
 char	*itoa_signed(long long int value, int base, char type)
 {
-    static char	radix[] = "0123456789ABCDEF";
-    char	*ans;
-	int		p;
+	static char		radix[] = "0123456789ABCDEF";
+	char			*ans;
+	int				p;
+	int				i;
+	int				last_dig;
 
-    int len = get_len2(value, base);
-    if (base < 2 || 16 < base
-		|| !(ans = (char *)malloc(sizeof(char) * (len + 2))))
+	if (base < 2 || 16 < base
+		|| !(ans = (char *)malloc(sizeof(char) * (get_len2(value, base) + 2))))
 		return (NULL);
 	p = 0;
 	if (base == 10 && value < 0)
 		ans[p++] = '-';
-    int i = 0;
-    while (i < len)
-    {
-        int last_digit = ABS(value % base);
-        value /= base;
-        ans[i++] = type == 'x' ? ft_tolower(radix[last_digit]) : radix[last_digit];
-    }
+	i = 0;
+	while (i < get_len2(value, base))
+	{
+		last_dig = ABS(value % base);
+		value /= base;
+		ans[i++] = type == 'x' ? ft_tolower(radix[last_dig]) : radix[last_dig];
+	}
 	ans[i] = '\0';
 	return (ans);
 }
 
-
-char	*itoa_unsigned(unsigned long long value, int base, char type)
+char	*itoa_u(unsigned long long value, int base, char type)
 {
-    static char	radix[] = "0123456789ABCDEF";
-    char	*ans;
+	static char		radix[] = "0123456789ABCDEF";
+	char			*ans;
+	int				len;
+	unsigned int	last_digit;
 
-    int len = get_len(value, base);
-    if (base < 2 || 16 < base
-        || !(ans = ft_strnew(len + 2)))
-        return (NULL);
-    while (len)
-    {
-        unsigned int last_digit = value % base;
-        value /= base;
-        if (type >= 97 && type <= 122)
-            ans[len-- - 1] = ft_tolower(radix[last_digit]);
-        else
-            ans[len-- - 1] = radix[last_digit];
-    }
-    return (ans);
+	len = get_len(value, base);
+	if (base < 2 || 16 < base
+		|| !(ans = ft_strnew(len + 2)))
+		return (NULL);
+	while (len)
+	{
+		last_digit = value % base;
+		value /= base;
+		if (type >= 97 && type <= 122)
+			ans[len-- - 1] = ft_tolower(radix[last_digit]);
+		else
+			ans[len-- - 1] = radix[last_digit];
+	}
+	return (ans);
 }
-

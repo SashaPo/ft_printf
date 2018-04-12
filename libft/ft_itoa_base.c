@@ -15,11 +15,15 @@
 
 void	aux(int n, int b, char *ans, int *p)
 {
-	char	base[] = "0123456789ABCDEF";
+	char	*base;
+	int		i;
 
+	i = 0;
+	base = "0123456789ABCDEF";
 	if (n <= -b || b <= n)
 		aux(n / b, b, ans, p);
-	ans[(*p)++] = base[ABS(n % b)];
+	base[i] = ABS(n % b);
+	ans[(*p)++] = base[i];
 }
 
 char	*ft_itoa_base(int value, int base)

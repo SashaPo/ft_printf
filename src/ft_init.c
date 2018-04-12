@@ -12,8 +12,6 @@
 
 #include "ft_printf.h"
 
-#include <stdio.h>
-
 t_pf	*ft_init(t_pf *pf)
 {
 	pf->flags.hash = 0;

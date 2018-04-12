@@ -37,9 +37,9 @@ static char	*ft_get_3bytes(unsigned int nbr)
 	char	*res;
 
 	res = ft_strnew(3);
-	res[2] = (char) ((nbr & 63) | (1 << 7));
+	res[2] = (char)((nbr & 63) | (1 << 7));
 	res[1] = (char)(((nbr >> 6) & 63) | (1 << 7));
-	res[0] = (char) (((nbr >> 12) & 63) | 224);
+	res[0] = (char)(((nbr >> 12) & 63) | 224);
 	return (res);
 }
 
@@ -48,17 +48,18 @@ static char	*ft_get_4bytes(unsigned int nbr)
 	char	*res;
 
 	res = ft_strnew(4);
-	res[3] = (char) ((nbr & 63) | (1 << 7));
+	res[3] = (char)((nbr & 63) | (1 << 7));
 	res[2] = (char)(((nbr >> 6) & 63) | (1 << 7));
-	res[1] = (char) (((nbr >> 12) & 63) | (1 << 7));
-	res[0] = (char) (((nbr >> 18)) | 240);
+	res[1] = (char)(((nbr >> 12) & 63) | (1 << 7));
+	res[0] = (char)(((nbr >> 18)) | 240);
 	return (res);
 }
 
-char	*ft_unicode(unsigned int uni)
+char		*ft_unicode(unsigned int uni)
 {
-	char	*res = NULL;
+	char	*res;
 
+	res = NULL;
 	if (uni < (1 << 7))
 		res = ft_get_1byte(uni);
 	else if (uni < (1 << 11))
@@ -67,16 +68,5 @@ char	*ft_unicode(unsigned int uni)
 		res = ft_get_3bytes(uni);
 	else
 		res = ft_get_4bytes(uni);
-	return (res);
-}
-
-char	*ft_get_unistr(unsigned int nbrs)
-{
-	char	*res;
-
-	if (!nbrs)
-		return (ft_strdup("(null)"));
-	char *tmp = ft_unicode(nbrs);
-	res = tmp;
 	return (res);
 }

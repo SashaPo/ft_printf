@@ -14,7 +14,7 @@
 
 static unsigned long long int		nlen(unsigned long long int val)
 {
-	unsigned long long len;
+	unsigned long long			len;
 
 	len = 0;
 	if (val <= 0)
@@ -27,9 +27,9 @@ static unsigned long long int		nlen(unsigned long long int val)
 	return (len);
 }
 
-char			*ft_itoa_ulong(unsigned long long int n)
+char								*ft_itoa_ulong(unsigned long long int n)
 {
-	char	*res;
+	char						*res;
 	unsigned long long int		strsize;
 
 	strsize = nlen(n);

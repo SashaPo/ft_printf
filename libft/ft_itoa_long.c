@@ -15,7 +15,7 @@
 
 static long long int		nlen(long long int val)
 {
-	long long len;
+	long long			len;
 
 	len = 0;
 	if (val <= 0)
@@ -28,9 +28,9 @@ static long long int		nlen(long long int val)
 	return (len);
 }
 
-char			*ft_itoa_long(long long int n)
+char						*ft_itoa_long(long long int n)
 {
-	char	*res;
+	char				*res;
 	long long int		strsize;
 	long long int		sign;
 
@@ -57,66 +57,45 @@ char			*ft_itoa_long(long long int n)
 	return (res);
 }
 
-char			*ft_itoa_long_prec(long long n, int prec)
+char						*ft_ifsign(char *res, int strs, int prec, int sign)
 {
-	char	*res;
-	long long int		strsize;
-	long long int		sign;
-
-	if (n >= 0)
-		sign = 0;
-	else
-		sign = 1;
-	strsize = nlen(n);
-	if (prec >= 0 && prec > strsize)
-		strsize = prec;
-	if (!(res = ft_strnew(strsize)))
-		return (NULL);
-	if (n == 0)
-		res[--strsize] = '0';
-	while (n != 0)
+	if (sign == 1)
 	{
-		if (n > 0)
-			res[--strsize] = n % 10 + '0';
-		else if (n < 0)
-			res[--strsize] = '0' - (n % 10);
-		n /= 10;
+		prec = prec + 1;
+		if (strs != 1)
+			while (prec >= 0 && strs != 1)
+				res[--strs] = '0';
 	}
-	if (sign)
-		res[0] = '-';
-	while (prec >= 0 && strsize)
-		res[--strsize] = '0';
+	while (prec >= 0 && strs)
+		res[--strs] = '0';
 	return (res);
 }
 
-char			*ft_itoa_double_prec(double n, int prec)
+char						*ft_itoa_long_prec(long long n, int prec)
 {
-	char	*res;
-	long long int		strsize;
+	char				*res;
+	long long int		strsz;
 	long long int		sign;
 
-	if (n >= 0)
-		sign = 0;
-	else
-		sign = 1;
-	strsize = nlen(n);
-	if (prec >= 0 && prec > strsize)
-		strsize = prec;
-	if (!(res = ft_strnew(strsize)))
+	sign = n >= 0 ? 0 : 1;
+	strsz = nlen(n);
+	if (prec >= 0 && prec >= strsz)
+		strsz = sign == 1 ? prec + 1 : prec;
+	if (!(res = ft_strnew(strsz)))
 		return (NULL);
 	if (n == 0)
-		res[--strsize] = '0';
+		res[--strsz] = '0';
 	while (n != 0)
 	{
-		if (n > 0)
-			res[--strsize] = (char) (n - (n / 10 * 10) + '0');
-		else if (n < 0)
-			res[--strsize] = (char) ('0' - (n - (n / 10 * 10)));
+		res[--strsz] = (n > 0) ? (char)(n % 10 + '0') : (char)('0' - (n % 10));
 		n /= 10;
 	}
 	if (sign)
 		res[0] = '-';
-	while (prec >= 0 && strsize)
-		res[--strsize] = '0';
+	if (prec >= 0 && prec > strsz)
+		res = ft_ifsign(res, strsz, prec, sign);
+	else
+		while (prec >= 0 && strsz)
+			res[--strsz] = '0';
 	return (res);
 }
